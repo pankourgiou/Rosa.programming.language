@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>🌹 Rosa Language</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+:root{
+ --bg1:#0f172a;
+ --bg2:#020617;
+ --accent:#f472b6;
+ --text:#e5e7eb;
+}
+
+body{
+ margin:0;
+ font-family:system-ui,Segoe UI,Arial;
+ background:linear-gradient(120deg,var(--bg1),var(--bg2));
+ color:var(--text);
+ overflow:hidden;
+ transition:.4s;
+}
+
+/* layout */
+.wrap{
+ display:grid;
+ grid-template-columns:2fr 1fr;
+ gap:16px;
+ padding:16px;
+ height:100vh;
+ box-sizing:border-box;
+}
+
+/* panels */
+.panel{
+ backdrop-filter:blur(14px);
+ background:rgba(255,255,255,0.05);
+ border-radius:16px;
+ padding:14px;
+ display:flex;
+ flex-direction:column;
+ gap:10px;
+ box-shadow:0 10px 30px rgba(0,0,0,.4);
+}
+
+/* output */
+#out{
+ flex:1;
+ background:#020617;
+ border-radius:12px;
+ padding:10px;
+ overflow:auto;
+ font-family:monospace;
+ font-size:14px;
+ white-space:pre-wrap;
+}
+
+/* editor */
+textarea{
+ height:160px;
+ border:none;
+ border-radius:12px;
+ padding:12px;
+ background:#020617;
+ color:white;
+ font-family:monospace;
+ resize:vertical;
+}
+
+/* buttons */
+button{
+ background:linear-gradient(45deg,var(--accent),#fb7185);
+ border:none;
+ color:white;
+ padding:10px;
+ border-radius:10px;
+ cursor:pointer;
+ font-weight:600;
+}
+
+button:hover{opacity:.85}
+
+.menu{
+ display:grid;
+ gap:8px;
+}
+
+/* floating flowers */
+.flower{
+ position:absolute;
+ font-size:22px;
+ opacity:.5;
+ animation:float linear infinite;
+}
+
+@keyframes float{
+ from{transform:translateY(110vh)}
+ to{transform:translateY(-10vh)}
+}
+</style>
+</head>
+
+<body>
+
+<div class="wrap">
+
+<!-- LEFT -->
+<div class="panel">
+
+<h2>🌹 Rosa</h2>
+
+<div id="out"></div>
+
+<textarea id="code" placeholder="Write Rosa code..."></textarea>
+
+<div class="menu">
+<button onclick="run()">Run</button>
+<button onclick="clearOut()">Clear</button>
+<button onclick="resetEnv()">Reset Garden</button>
+<button onclick="nextTheme()">Change Theme</button>
+<button onclick="autoTheme()">Auto Theme</button>
+</div>
+
+</div>
+
+<!-- RIGHT -->
+<div class="panel">
+
+<h3>Examples</h3>
+
+<button onclick="ex(1)">Greeting</button>
+<button onclick="ex(2)">Math</button>
+<button onclick="ex(3)">Facts</button>
+<button onclick="ex(4)">Random</button>
+<button onclick="ex(5)">Fibonacci</button>
+
+<h3>Help</h3>
+
+<button onclick="showHelp()">Show Commands</button>
+
+<div id="helpBox"></div>
+
+</div>
+
+</div>
+
+<script>
+/* FLOWERS */
+setInterval(()=>{
+ let f=document.createElement("div")
+ f.className="flower"
+ f.innerText=["🌹","🌸","🌺"][Math.floor(Math.random()*3)]
+ f.style.left=Math.random()*100+"vw"
+ f.style.animationDuration=10+Math.random()*10+"s"
+ document.body.appendChild(f)
+ setTimeout(()=>f.remove(),20000)
+},1200)
+
+/* OUTPUT */
+const out=document.getElementById("out")
+function print(t=""){
+ out.innerText+=t+"\n"
+ out.scrollTop=out.scrollHeight
+}
+function clearOut(){out.innerText=""}
+
+/* ENV */
+let env={facts:[]}
+
+/* BUILTINS */
+const B={
+ sqrt:Math.sqrt,
+ sin:Math.sin,
+ cos:Math.cos,
+ rand:()=>Math.random(),
+ len:x=>x.length
+}
+
+/* SAFE EVAL */
+function E(expr){
+ try{
+  return Function("env","b",
+   "with(b) with(env) return ("+expr+")")(env,B)
+ }catch(e){
+  print("Error: "+e.message)
+  return null
+ }
+}
+
+/* ROSA COMMANDS */
+function run(){
+ let lines=code.value.split("\n")
+
+ for(let l of lines){
+  let line=l.trim()
+  if(!line||line.startsWith("//")) continue
+
+  // blossom = add fact
+  if(line.startsWith("blossom ")){
+   env.facts.push(line.slice(8))
+   print("🌱 added fact")
+   continue
+  }
+
+  // wilt = remove fact
+  if(line.startsWith("wilt ")){
+   let f=line.slice(5)
+   env.facts=env.facts.filter(x=>x!=f)
+   print("🍂 removed fact")
+   continue
+  }
+
+  // gather = list facts
+  if(line=="gather"){
+   print("🌹 facts: "+env.facts.join(", "))
+   continue
+  }
+
+  // petal = show memory
+  if(line=="petal"){
+   print(JSON.stringify(env,null,2))
+   continue
+  }
+
+  // bloom = print
+  if(line.startsWith("bloom ")){
+   let v=E(line.slice(6))
+   if(v!==null) print(v)
+   continue
+  }
+
+  // assignment
+  if(line.includes(":=")){
+   let [n,e]=line.split(":=")
+   env[n.trim()]=E(e)
+   continue
+  }
+
+  print("Unknown: "+line)
+ }
+}
+
+/* RESET */
+function resetEnv(){
+ env={facts:[]}
+ print("Garden reset 🌱")
+}
+
+/* EXAMPLES */
+function ex(n){
+ const e={
+ 1:`name := "Rosa"
+bloom "Hello " + name`,
+
+ 2:`x := 5
+y := 3
+bloom x+y
+bloom sqrt(25)`,
+
+ 3:`blossom sky_blue
+blossom code_fun
+gather`,
+
+ 4:`r := rand()
+bloom r`,
+
+ 5:`a := 0
+b := 1
+c := a+b
+bloom a
+bloom b
+bloom c`
+ }
+ code.value=e[n]
+}
+
+/* HELP */
+function showHelp(){
+ helpBox.innerText=
+`🌹 Rosa Commands
+
+name := value
+  assign variable
+
+bloom expr
+  print value
+
+blossom fact
+  add fact
+
+wilt fact
+  remove fact
+
+gather
+  list facts
+
+petal
+  show memory
+
+Builtins:
+sqrt(x)
+sin(x)
+cos(x)
+rand()
+len(list)`
+}
+
+/* THEMES */
+const themes=[
+["#0f172a","#020617","#f472b6"],
+["#052e16","#020617","#4ade80"],
+["#1e1b4b","#020617","#818cf8"],
+["#3f0d12","#020617","#fb7185"]
+]
+let ti=0
+function apply(){
+ document.documentElement.style.setProperty("--bg1",themes[ti][0])
+ document.documentElement.style.setProperty("--bg2",themes[ti][1])
+ document.documentElement.style.setProperty("--accent",themes[ti][2])
+}
+function nextTheme(){ti=(ti+1)%themes.length;apply()}
+
+let auto=null
+function autoTheme(){
+ if(auto){clearInterval(auto);auto=null;return}
+ auto=setInterval(nextTheme,3000)
+}
+
+print("Rosa ready 🌹")
+</script>
+
+</body>
+</html>
