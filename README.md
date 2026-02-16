@@ -1,0 +1,1 @@
+It's a simple programming language called Rosa there are examples and a helper it's writen based on html full working you will have to copy and paste the code save it as .html then double click the file and you are ready to run simple programs yet importand and powerful enough...I hope you enjoy this!
